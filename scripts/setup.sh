@@ -32,14 +32,20 @@ else
     echo -e "${GREEN}[OK] Environment created.${NC}"
 fi
 
+# Activate the conda environment
+echo -e "${YELLOW}[..] Activating conda environment '$envName'...${NC}"
+eval "$(conda shell.bash hook)"
+conda activate "$envName"
+echo -e "${GREEN}[OK] Environment activated.${NC}"
+
 # ── 2. Install dependencies ──────────────────────────────────────
 echo -e "${YELLOW}[..] Installing Python dependencies...${NC}"
-conda run -n "$envName" --no-banner pip install -e ".[all]" > /dev/null 2>&1
+pip install -e ".[all]"
 echo -e "${GREEN}[OK] Dependencies installed.${NC}"
 
 # Verify framework loads
 echo -e "${YELLOW}[..] Verifying framework...${NC}"
-runtimes=$(conda run -n "$envName" --no-banner python -c "from src.runtimes.registry import list_runtimes; print(list_runtimes())" 2>&1)
+runtimes=$(python -c "from src.runtimes.registry import list_runtimes; print(list_runtimes())" 2>&1)
 echo -e "${GREEN}[OK] Available runtimes: $runtimes${NC}"
 
 # ── 3. Generate model config if missing ──────────────────────────

@@ -30,7 +30,7 @@ if [[ ! -f "$modelsConfig" ]]; then
 fi
 
 # Parse YAML via Python and get JSON
-configJson=$(conda run -n "$envName" --no-banner python -c "
+configJson=$(conda run -n "$envName" python -c "
 import yaml, json
 with open('$modelsConfig') as f:
     cfg = yaml.safe_load(f)
@@ -80,7 +80,7 @@ if [[ -n "$foundryModels" ]]; then
         [[ -z "$alias" ]] && continue
         echo -e "${YELLOW}[..] Loading $alias ($dev) — will download on first use...${NC}"
         devUpper=$(echo "$dev" | tr '[:lower:]' '[:upper:]')
-        result=$(conda run -n "$envName" --no-banner python -c "
+        result=$(conda run -n "$envName" python -c "
 try:
     from foundry_local import FoundryLocalManager
     from foundry_local.models import DeviceType

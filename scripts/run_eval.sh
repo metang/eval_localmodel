@@ -41,7 +41,7 @@ compareConfig="$ROOT/config/compare_auto_${Tag}.yaml"
 echo -e "\n${CYAN}=== Generating compare config ===${NC}"
 
 # Use Python to convert models.yaml → compare YAML
-conda run -n "$envName" --no-banner python -c "
+conda run -n "$envName" python -c "
 import yaml, sys
 
 with open('$modelsConfig') as f:
@@ -95,7 +95,7 @@ htmlPath="$resultsDir/report_${Tag}.html"
 
 # ── 3. Run evaluation ────────────────────────────────────────────
 echo -e "\n${CYAN}=== Running evaluation ===${NC}"
-conda run -n "$envName" --no-banner python -m src.cli compare \
+conda run -n "$envName" python -m src.cli compare \
     -c "$compareConfig" \
     --csv "$csvPath" \
     --html "$htmlPath"
