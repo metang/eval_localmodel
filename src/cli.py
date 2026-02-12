@@ -150,25 +150,37 @@ def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None) -> N
 
     all_results = []
     summaries = []
+    entries = cfg["runs"]
+    total_runs = len(entries)
 
-    for entry in cfg["runs"]:
+    for idx, entry in enumerate(entries, 1):
         rt_name = entry["runtime"]
         model_id = entry["model"]
         base_url = entry.get("base_url")
-
         device = entry.get("device")
-        if rt_name == "foundry-local" and not base_url:
-            rt = create_runtime(rt_name, alias=model_id, device=device)
-        else:
-            rc = RuntimeConfig(name=rt_name, model_id=model_id)
-            if base_url:
-                rc.base_url = base_url
-            rt = create_runtime(rt_name, config=rc)
-        if not rt.health_check():
-            console.print(f"[yellow]Skipping {rt_name}/{model_id} (not reachable)[/yellow]")
+
+        label = f"{rt_name}/{model_id}"
+        if device:
+            label += f" [{device.upper()}]"
+
+        console.rule(f"[bold]Run {idx}/{total_runs}: {label}[/bold]")
+
+        try:
+            if rt_name == "foundry-local" and not base_url:
+                rt = create_runtime(rt_name, alias=model_id, device=device)
+            else:
+                rc = RuntimeConfig(name=rt_name, model_id=model_id)
+                if base_url:
+                    rc.base_url = base_url
+                rt = create_runtime(rt_name, config=rc)
+        except Exception as exc:
+            console.print(f"[yellow]⚠ Skipping {label}: {exc}[/yellow]")
             continue
 
-        console.print(f"Evaluating [bold]{rt_name}/{model_id}[/bold]…")
+        if not rt.health_check():
+            console.print(f"[yellow]⚠ Skipping {label} (not reachable)[/yellow]")
+            continue
+
         results = run_evaluation(rt, test_cases)
         all_results.extend(results)
         summaries.append(summarize(results))

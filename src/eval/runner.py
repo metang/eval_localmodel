@@ -5,13 +5,23 @@ from __future__ import annotations
 import logging
 from typing import Sequence
 
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn
 
 from src.models import EvalResult, MatchLevel, TestCase, ToolCallResult
 from src.eval.matchers import find_hallucinated_args, match_tool_call, match_tool_calls
+from src.reporting.console import console
 from src.runtimes.base import BaseRuntime
 
 logger = logging.getLogger(__name__)
+
+
+def _status_icon(result: EvalResult) -> str:
+    """Return a coloured icon for a single result."""
+    if result.error:
+        return "[red]✗ ERROR[/red]"
+    if result.expected_negative:
+        return "[green]✓ PASS[/green]" if result.correctly_refused else "[red]✗ FAIL[/red]"
+    return "[green]✓ PASS[/green]" if result.full_match else "[red]✗ FAIL[/red]"
 
 
 def run_evaluation(
@@ -35,19 +45,27 @@ def run_evaluation(
         runtime.warmup()
 
     results: list[EvalResult] = []
+    total = len(test_cases) * num_runs
 
     if show_progress:
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
-            transient=True,
+            BarColumn(),
+            MofNCompleteColumn(),
+            transient=False,
         ) as progress:
-            task = progress.add_task("Evaluating…", total=len(test_cases) * num_runs)
+            task = progress.add_task("Running tests", total=total)
             for tc in test_cases:
-                for _ in range(num_runs):
+                for run_idx in range(num_runs):
+                    progress.update(task, description=f"[{tc.id}]")
                     r = _evaluate_single(runtime, tc)
                     results.append(r)
                     progress.advance(task)
+                    progress.console.print(
+                        f"  {_status_icon(r)}  {tc.id} ({tc.category})"
+                    )
+            progress.update(task, description="Done")
     else:
         for tc in test_cases:
             for _ in range(num_runs):
