@@ -9,7 +9,7 @@ from openai import OpenAI
 
 from src.models import ToolCallResult
 from src.runtimes.base import BaseRuntime, RuntimeConfig
-from src.runtimes.parsing import parse_openai_tool_calls
+from src.runtimes.parsing import estimate_completion_tokens, parse_openai_tool_calls
 from src.runtimes.registry import register_runtime
 
 
@@ -70,9 +70,16 @@ class OllamaRuntime(BaseRuntime):
                 "completion_tokens": response.usage.completion_tokens,
             }
 
+        # Fallback: estimate tokens if API didn't provide them
+        completion_tokens = usage.get("completion_tokens") or 0
+        if not completion_tokens:
+            completion_tokens = estimate_completion_tokens(msg, parsed_calls)
+            usage["completion_tokens"] = completion_tokens
+            usage["estimated"] = True
+
         tps = 0.0
-        if usage.get("completion_tokens") and elapsed_ms > 0:
-            tps = usage["completion_tokens"] / (elapsed_ms / 1000)
+        if completion_tokens and elapsed_ms > 0:
+            tps = completion_tokens / (elapsed_ms / 1000)
 
         return ToolCallResult(
             tool_calls=parsed_calls,

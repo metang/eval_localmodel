@@ -7,7 +7,11 @@ from typing import Any
 
 from src.models import ToolCallResult
 from src.runtimes.base import BaseRuntime, RuntimeConfig
-from src.runtimes.parsing import parse_dict_tool_calls, parse_openai_tool_calls
+from src.runtimes.parsing import (
+    estimate_completion_tokens,
+    parse_dict_tool_calls,
+    parse_openai_tool_calls,
+)
 from src.runtimes.registry import register_runtime
 
 
@@ -126,9 +130,17 @@ class LlamaCppRuntime(BaseRuntime):
                 "prompt_tokens": response.usage.prompt_tokens,
                 "completion_tokens": response.usage.completion_tokens,
             }
+
+        # Fallback: estimate tokens if API didn't provide them
+        completion_tokens = usage.get("completion_tokens") or 0
+        if not completion_tokens:
+            completion_tokens = estimate_completion_tokens(msg, parsed_calls)
+            usage["completion_tokens"] = completion_tokens
+            usage["estimated"] = True
+
         tps = 0.0
-        if usage.get("completion_tokens") and elapsed_ms > 0:
-            tps = usage["completion_tokens"] / (elapsed_ms / 1000)
+        if completion_tokens and elapsed_ms > 0:
+            tps = completion_tokens / (elapsed_ms / 1000)
 
         return ToolCallResult(
             tool_calls=parsed_calls,
@@ -161,9 +173,19 @@ class LlamaCppRuntime(BaseRuntime):
                 "completion_tokens": usage.get("completion_tokens", 0),
             }
 
+        # Fallback: estimate tokens if API didn't provide them
+        completion_tokens = usage.get("completion_tokens") or 0
+        if not completion_tokens:
+            # For dict response, wrap msg for estimation
+            class MsgWrapper:
+                content = msg.get("content")
+            completion_tokens = estimate_completion_tokens(MsgWrapper(), parsed_calls)
+            usage["completion_tokens"] = completion_tokens
+            usage["estimated"] = True
+
         tps = 0.0
-        if usage.get("completion_tokens") and elapsed_ms > 0:
-            tps = usage["completion_tokens"] / (elapsed_ms / 1000)
+        if completion_tokens and elapsed_ms > 0:
+            tps = completion_tokens / (elapsed_ms / 1000)
 
         return ToolCallResult(
             tool_calls=parsed_calls,
