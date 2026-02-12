@@ -90,6 +90,7 @@ def _evaluate_single(runtime: BaseRuntime, tc: TestCase) -> EvalResult:
     if tc.is_negative:
         result.correctly_refused = len(actual_calls) == 0
         result.full_match = result.correctly_refused
+        result.tool_name_correct = result.correctly_refused
         return result
 
     # ---- positive tests --------------------------------------------------

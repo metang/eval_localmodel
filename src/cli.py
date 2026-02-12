@@ -59,6 +59,7 @@ def suites() -> None:
     help="Test suite name(s). Omit to run all.",
 )
 @click.option("--base-url", default=None, help="Override the runtime's base URL")
+@click.option("--device", default=None, type=click.Choice(["cpu", "gpu", "npu"], case_sensitive=False), help="Device type for foundry-local (cpu/gpu/npu)")
 @click.option("--runs", "-n", default=1, help="Repeat each test N times")
 @click.option("--csv", "csv_path", default=None, help="Export results to CSV")
 @click.option("--failures/--no-failures", default=True, help="Show failure details")
@@ -67,6 +68,7 @@ def run(
     model: str,
     suite: tuple[str, ...],
     base_url: str | None,
+    device: str | None,
     runs: int,
     csv_path: str | None,
     failures: bool,
@@ -85,7 +87,7 @@ def run(
     try:
         if runtime == "foundry-local" and not base_url:
             # Use alias mode — SDK auto-discovers endpoint & model ID
-            rt = create_runtime(runtime, alias=model)
+            rt = create_runtime(runtime, alias=model, device=device)
         else:
             config = RuntimeConfig(name=runtime, model_id=model)
             if base_url:
@@ -154,8 +156,9 @@ def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None) -> N
         model_id = entry["model"]
         base_url = entry.get("base_url")
 
+        device = entry.get("device")
         if rt_name == "foundry-local" and not base_url:
-            rt = create_runtime(rt_name, alias=model_id)
+            rt = create_runtime(rt_name, alias=model_id, device=device)
         else:
             rc = RuntimeConfig(name=rt_name, model_id=model_id)
             if base_url:
@@ -170,6 +173,7 @@ def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None) -> N
         all_results.extend(results)
         summaries.append(summarize(results))
         print_summary(summaries[-1])
+        rt.cleanup()
 
     if len(summaries) > 1:
         print_comparison(summaries)

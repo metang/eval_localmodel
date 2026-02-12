@@ -86,5 +86,7 @@ class EvalResult:
     @property
     def argument_accuracy(self) -> float:
         if not self.argument_scores:
+            if self.expected_negative:
+                return 1.0 if self.correctly_refused else 0.0
             return 1.0 if self.tool_name_correct else 0.0
         return sum(self.argument_scores.values()) / len(self.argument_scores)

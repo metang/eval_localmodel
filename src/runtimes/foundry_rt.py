@@ -36,6 +36,7 @@ class FoundryLocalRuntime(BaseRuntime):
         config: RuntimeConfig | None = None,
         *,
         alias: str | None = None,
+        device: str | None = None,
         **kwargs: Any,
     ):
         self._manager = None
@@ -44,9 +45,19 @@ class FoundryLocalRuntime(BaseRuntime):
             # Auto-start via SDK
             try:
                 from foundry_local import FoundryLocalManager
+                from foundry_local.models import DeviceType
 
-                self._manager = FoundryLocalManager(alias)
-                model_info = self._manager.get_model_info(alias)
+                device_type = None
+                if device:
+                    device_type = DeviceType(device.upper())
+
+                self._manager = FoundryLocalManager(
+                    alias, device=device_type,
+                )
+                # Unload all models to ensure clean isolation
+                self._unload_all()
+                # Load the requested model and use its actual ID
+                model_info = self._manager.load_model(alias, device=device_type)
                 config = RuntimeConfig(
                     name="foundry-local",
                     base_url=self._manager.endpoint,
@@ -125,6 +136,20 @@ class FoundryLocalRuntime(BaseRuntime):
                 messages=[{"role": "user", "content": "hi"}],
                 max_tokens=1,
             )
+        except Exception:
+            pass
+
+    def cleanup(self) -> None:
+        """Unload all models to free resources."""
+        self._unload_all()
+
+    def _unload_all(self) -> None:
+        """Unload every loaded model from the Foundry Local service."""
+        if not self._manager:
+            return
+        try:
+            for model in self._manager.list_loaded_models():
+                self._manager.unload_model(model.id)
         except Exception:
             pass
 
