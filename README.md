@@ -12,8 +12,24 @@ Modular evaluation framework for testing local LLM **tool-calling accuracy and a
 
 ## Quick Start (Scripts)
 
-Three PowerShell scripts automate the full workflow:
+Three scripts automate the full workflow (available in both PowerShell and Bash):
 
+**Bash (macOS / Linux):**
+```bash
+# 1. One-time setup — creates conda env, installs deps, generates config
+./scripts/setup.sh
+
+# 2. Edit config/models.yaml to choose which models & devices to evaluate
+
+# 3. Download / pull all models listed in the config
+./scripts/download_models.sh
+
+# 4. Run evaluation and open HTML report in browser
+./scripts/run_eval.sh                   # auto-timestamped output
+./scripts/run_eval.sh -t experiment1    # custom tag
+```
+
+**PowerShell (Windows):**
 ```powershell
 # 1. One-time setup — creates conda env, installs deps, generates config
 .\scripts\setup.ps1
@@ -53,7 +69,7 @@ models:
   #     base_url: "http://localhost:8000/v1"
 ```
 
-The `run_eval.ps1` script auto-generates a compare YAML from this file. Foundry Local entries expand one run per device variant; unavailable devices are skipped gracefully.
+The `run_eval` script auto-generates a compare YAML from this file. Foundry Local entries expand one run per device variant; unavailable devices are skipped gracefully.
 
 ## Manual CLI Usage
 
@@ -114,9 +130,9 @@ config/
 ├── models.yaml            # Which models to download & evaluate
 ├── compare_*.yaml         # Compare run configs (manual or auto-generated)
 scripts/
-├── setup.ps1              # Environment setup
-├── download_models.ps1    # Model download/pull
-└── run_eval.ps1           # Run evaluation + generate report
+├── setup.sh / setup.ps1              # Environment setup
+├── download_models.sh / .ps1         # Model download/pull
+└── run_eval.sh / .ps1                 # Run evaluation + generate report
 doc/
 └── test_cases.md          # Test case documentation
 ```
