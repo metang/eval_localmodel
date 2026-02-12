@@ -166,6 +166,7 @@ def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None, html
             label += f" [{device.upper()}]"
 
         console.rule(f"[bold]Run {idx}/{total_runs}: {label}[/bold]")
+        console.print(f"[dim]Initializing runtime...[/dim]")
 
         try:
             if rt_name == "foundry-local" and not base_url:
@@ -183,6 +184,7 @@ def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None, html
             console.print(f"[yellow]⚠ Skipping {label} (not reachable)[/yellow]")
             continue
 
+        console.print(f"[dim]Running {len(test_cases)} tests...[/dim]")
         results = run_evaluation(rt, test_cases)
         all_results.extend(results)
         summaries.append(summarize(results))
