@@ -5,3 +5,4 @@ __pycache__/
 results/
 models/
 config/compare_auto_*.yaml
+*.egg-info/
