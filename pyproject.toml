@@ -1,0 +1,29 @@
+[project]
+name = "eval-localmodel"
+version = "0.1.0"
+description = "Modular evaluation framework for local LLM tool calling & agentic orchestration"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.12",
+    "pandas>=2.0",
+    "tabulate>=0.9",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "rapidfuzz>=3.0",
+    "jsonschema>=4.0",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+ollama = ["ollama>=0.3"]
+llamacpp = ["llama-cpp-python>=0.3"]
+foundry = ["foundry-local-sdk>=0.1"]
+analysis = ["matplotlib>=3.7", "seaborn>=0.13"]
+all = ["eval-localmodel[ollama,llamacpp,foundry,analysis]"]
+
+[project.scripts]
+eval-localmodel = "src.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"

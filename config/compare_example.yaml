@@ -1,0 +1,11 @@
+# Example comparison config — list runtime/model combos to evaluate side-by-side
+runs:
+  - runtime: ollama
+    model: llama3.1
+  - runtime: ollama
+    model: qwen2.5:7b
+  # - runtime: foundry-local
+  #   model: phi-4-mini
+  # - runtime: llama-cpp
+  #   model: your-model.gguf
+  #   base_url: http://localhost:8000/v1

@@ -1,0 +1,76 @@
+[
+  {
+    "id": "parallel_weather_01",
+    "category": "multi_tool",
+    "description": "Should call weather for two cities in parallel",
+    "messages": [
+      {"role": "user", "content": "What is the weather in both New York and London?"}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get current weather for a city",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {"type": "string", "description": "City name"}
+            },
+            "required": ["location"]
+          }
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {"name": "get_weather", "arguments": {"location": "New York"}},
+      {"name": "get_weather", "arguments": {"location": "London"}}
+    ],
+    "match_level": "fuzzy",
+    "tags": ["parallel"]
+  },
+  {
+    "id": "multi_different_01",
+    "category": "multi_tool",
+    "description": "Should call two different tools in one turn",
+    "messages": [
+      {"role": "user", "content": "What is the weather in Paris and also calculate 25 * 4?"}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get current weather for a city",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {"type": "string"}
+            },
+            "required": ["location"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "calculate",
+          "description": "Evaluate a math expression",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "expression": {"type": "string"}
+            },
+            "required": ["expression"]
+          }
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {"name": "get_weather", "arguments": {"location": "Paris"}},
+      {"name": "calculate", "arguments": {"expression": "25 * 4"}}
+    ],
+    "match_level": "fuzzy",
+    "tags": ["parallel", "multi_function"]
+  }
+]

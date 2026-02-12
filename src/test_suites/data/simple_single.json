@@ -1,0 +1,109 @@
+[
+  {
+    "id": "simple_weather_01",
+    "category": "simple_single",
+    "description": "Basic weather lookup — single required argument",
+    "messages": [
+      {"role": "user", "content": "What is the current weather in San Francisco?"}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the current weather for a location",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City name, e.g. 'San Francisco, CA'"
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "Temperature unit"
+              }
+            },
+            "required": ["location"]
+          }
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {"name": "get_weather", "arguments": {"location": "San Francisco"}}
+    ],
+    "match_level": "fuzzy"
+  },
+  {
+    "id": "simple_weather_02",
+    "category": "simple_single",
+    "description": "Weather with explicit unit request",
+    "messages": [
+      {"role": "user", "content": "Tell me the weather in Tokyo in celsius."}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the current weather for a location",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City name"
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"]
+              }
+            },
+            "required": ["location"]
+          }
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {"name": "get_weather", "arguments": {"location": "Tokyo", "unit": "celsius"}}
+    ],
+    "match_level": "fuzzy"
+  },
+  {
+    "id": "simple_search_01",
+    "category": "simple_single",
+    "description": "Database search with required query",
+    "messages": [
+      {"role": "user", "content": "Search for wireless headphones under $50"}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "search_products",
+          "description": "Search the product catalog",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "query": {"type": "string", "description": "Search terms"},
+              "max_price": {"type": "number", "description": "Maximum price in USD"},
+              "category": {
+                "type": "string",
+                "enum": ["electronics", "clothing", "home", "toys"]
+              }
+            },
+            "required": ["query"]
+          }
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {
+        "name": "search_products",
+        "arguments": {"query": "wireless headphones", "max_price": 50}
+      }
+    ],
+    "match_level": "fuzzy"
+  }
+]

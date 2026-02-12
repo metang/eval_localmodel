@@ -1,0 +1,127 @@
+[
+  {
+    "id": "select_calc_01",
+    "category": "tool_selection",
+    "description": "Should pick calculator over weather when asked to compute",
+    "messages": [
+      {"role": "user", "content": "What is 15% of 230?"}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get current weather for a city",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {"type": "string"}
+            },
+            "required": ["location"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "calculate",
+          "description": "Evaluate a mathematical expression",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "expression": {"type": "string", "description": "Math expression to evaluate, e.g. '0.15 * 230'"}
+            },
+            "required": ["expression"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "search_web",
+          "description": "Search the web for information",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "query": {"type": "string"}
+            },
+            "required": ["query"]
+          }
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {"name": "calculate", "arguments": {"expression": "0.15 * 230"}}
+    ],
+    "match_level": "fuzzy"
+  },
+  {
+    "id": "select_email_01",
+    "category": "tool_selection",
+    "description": "Pick send_email from a large toolset",
+    "messages": [
+      {"role": "user", "content": "Send an email to alice@example.com with subject 'Meeting Tomorrow' and body 'Hi Alice, can we meet at 3pm?'"}
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get weather for a location",
+          "parameters": {"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]}
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "send_email",
+          "description": "Send an email message",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "to": {"type": "string", "description": "Recipient email address"},
+              "subject": {"type": "string", "description": "Email subject"},
+              "body": {"type": "string", "description": "Email body text"}
+            },
+            "required": ["to", "subject", "body"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "create_calendar_event",
+          "description": "Create a calendar event",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {"type": "string"},
+              "date": {"type": "string"},
+              "time": {"type": "string"}
+            },
+            "required": ["title", "date"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "search_contacts",
+          "description": "Search contacts by name",
+          "parameters": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}
+        }
+      }
+    ],
+    "expected_tool_calls": [
+      {
+        "name": "send_email",
+        "arguments": {
+          "to": "alice@example.com",
+          "subject": "Meeting Tomorrow",
+          "body": "Hi Alice, can we meet at 3pm?"
+        }
+      }
+    ],
+    "match_level": "fuzzy"
+  }
+]
