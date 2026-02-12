@@ -91,46 +91,24 @@ for m in data.get('foundry-local', []):
 
 if [[ -n "$foundryModels" ]]; then
     echo -e "\n${MAGENTA}--- Foundry Local ---${NC}"
-    while IFS='|' read -r alias dev; do
-        [[ -z "$alias" ]] && continue
-        echo -e "${YELLOW}[..] Loading $alias ($dev) — will download on first use...${NC}"
-        devUpper=$(echo "$dev" | tr '[:lower:]' '[:upper:]')
-        result=$(conda run -n "$envName" python -c "
-import sys
-try:
-    from foundry_local import FoundryLocalManager
-    from foundry_local.models import DeviceType
-
-    def progress_callback(event):
-        if hasattr(event, 'progress') and hasattr(event, 'total'):
-            pct = int(event.progress * 100 / event.total) if event.total > 0 else 0
-            bar_width = 40
-            filled = int(bar_width * pct / 100)
-            bar = '█' * filled + '░' * (bar_width - filled)
-            print(f'\r  [{bar}] {pct}%', end='', flush=True, file=sys.stderr)
-        elif hasattr(event, 'message'):
-            print(f'\r  {event.message}', end='', flush=True, file=sys.stderr)
-
-    mgr = FoundryLocalManager()
-    # Try to register progress callback if supported
-    if hasattr(mgr, 'on_download_progress'):
-        mgr.on_download_progress(progress_callback)
-    elif hasattr(mgr, 'set_progress_callback'):
-        mgr.set_progress_callback(progress_callback)
-
-    info = mgr.load_model('$alias', device=DeviceType('$devUpper'))
-    print('')  # newline after progress bar
-    print(f'OK: {info.id}')
-    mgr.unload_model(info.id)
-except Exception as e:
-    print(f'SKIP: {e}')
-" 2>&1 | tail -1)
-        if [[ "$result" == OK:* ]]; then
-            echo -e "${GREEN}[OK] $alias ($dev) ready.${NC}"
-        else
-            echo -e "${YELLOW}[SKIP] $alias ($dev): $result${NC}"
-        fi
-    done <<< "$foundryModels"
+    # Check if foundry CLI is available
+    if command -v foundry &> /dev/null; then
+        while IFS='|' read -r alias dev; do
+            [[ -z "$alias" ]] && continue
+            # Convert device to proper case (CPU, GPU, NPU)
+            devFormatted=$(echo "$dev" | tr '[:lower:]' '[:upper:]')
+            echo -e "${YELLOW}[..] Downloading $alias ($devFormatted) via foundry CLI...${NC}"
+            # Use foundry CLI to download
+            if foundry model download "$alias" --device "$devFormatted" 2>&1; then
+                echo -e "${GREEN}[OK] $alias ($devFormatted) ready.${NC}"
+            else
+                echo -e "${YELLOW}[SKIP] $alias ($devFormatted): download failed${NC}"
+            fi
+        done <<< "$foundryModels"
+    else
+        echo -e "${YELLOW}[SKIP] foundry CLI not found. Install via: brew install foundry${NC}"
+        echo -e "${YELLOW}       Models will be downloaded on first use during evaluation.${NC}"
+    fi
 fi
 
 # ── llama-cpp GGUF downloads ─────────────────────────────────────
