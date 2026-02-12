@@ -52,6 +52,21 @@ if [[ -n "$ollamaModels" ]]; then
     if ! command -v ollama &> /dev/null; then
         echo -e "${YELLOW}[SKIP] ollama CLI not found. Install from https://ollama.com${NC}"
     else
+        # Check if ollama server is running, start if needed
+        if ! curl -s http://localhost:11434/api/tags &> /dev/null; then
+            echo -e "${YELLOW}[..] Starting ollama serve...${NC}"
+            ollama serve &> /dev/null &
+            OLLAMA_PID=$!
+            sleep 2  # Give it time to start
+            if curl -s http://localhost:11434/api/tags &> /dev/null; then
+                echo -e "${GREEN}[OK] Ollama server started (PID: $OLLAMA_PID)${NC}"
+            else
+                echo -e "${RED}[FAIL] Could not start ollama server${NC}"
+            fi
+        else
+            echo -e "${GREEN}[OK] Ollama server already running${NC}"
+        fi
+
         while IFS= read -r name; do
             [[ -z "$name" ]] && continue
             echo -e "${YELLOW}[..] Pulling $name ...${NC}"
@@ -81,11 +96,30 @@ if [[ -n "$foundryModels" ]]; then
         echo -e "${YELLOW}[..] Loading $alias ($dev) — will download on first use...${NC}"
         devUpper=$(echo "$dev" | tr '[:lower:]' '[:upper:]')
         result=$(conda run -n "$envName" python -c "
+import sys
 try:
     from foundry_local import FoundryLocalManager
     from foundry_local.models import DeviceType
-    mgr = FoundryLocalManager('$alias', device=DeviceType('$devUpper'))
+
+    def progress_callback(event):
+        if hasattr(event, 'progress') and hasattr(event, 'total'):
+            pct = int(event.progress * 100 / event.total) if event.total > 0 else 0
+            bar_width = 40
+            filled = int(bar_width * pct / 100)
+            bar = '█' * filled + '░' * (bar_width - filled)
+            print(f'\r  [{bar}] {pct}%', end='', flush=True, file=sys.stderr)
+        elif hasattr(event, 'message'):
+            print(f'\r  {event.message}', end='', flush=True, file=sys.stderr)
+
+    mgr = FoundryLocalManager()
+    # Try to register progress callback if supported
+    if hasattr(mgr, 'on_download_progress'):
+        mgr.on_download_progress(progress_callback)
+    elif hasattr(mgr, 'set_progress_callback'):
+        mgr.set_progress_callback(progress_callback)
+
     info = mgr.load_model('$alias', device=DeviceType('$devUpper'))
+    print('')  # newline after progress bar
     print(f'OK: {info.id}')
     mgr.unload_model(info.id)
 except Exception as e:
@@ -131,7 +165,7 @@ if [[ -n "$llamacppModels" ]]; then
         mkdir -p "$(dirname "$fullPath")"
 
         echo -e "${YELLOW}[..] Downloading $name from $url ...${NC}"
-        if curl -L -o "$fullPath" "$url"; then
+        if curl -L --progress-bar -o "$fullPath" "$url"; then
             sizeMB=$(du -m "$fullPath" | cut -f1)
             echo -e "${GREEN}[OK] $name downloaded (${sizeMB} MB).${NC}"
         else
