@@ -17,6 +17,7 @@ from src.reporting.console import (
     print_failures,
     print_summary,
 )
+from src.reporting.html import generate_html_report
 from src.runtimes.base import RuntimeConfig
 from src.runtimes.registry import create_runtime, list_runtimes
 from src.test_suites import list_suites, load_all_suites, load_suites
@@ -130,7 +131,8 @@ def run(
 )
 @click.option("--suite", "-s", multiple=True)
 @click.option("--csv", "csv_path", default=None)
-def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None) -> None:
+@click.option("--html", "html_path", default=None, help="Export report to HTML file")
+def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None, html_path: str | None) -> None:
     """Compare multiple models/runtimes side-by-side.
 
     Config YAML format::
@@ -192,6 +194,10 @@ def compare(config_path: str, suite: tuple[str, ...], csv_path: str | None) -> N
 
     if csv_path:
         export_csv(all_results, csv_path)
+
+    if html_path and summaries:
+        generate_html_report(summaries, all_results, html_path)
+        console.print(f"[green]HTML report exported to {html_path}[/green]")
 
 
 if __name__ == "__main__":
