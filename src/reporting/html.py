@@ -44,6 +44,9 @@ def _css() -> str:
                    border-radius: 8px; padding: 1rem; text-align: center; }
     .metric-value { font-size: 1.8rem; font-weight: 700; }
     .metric-label { font-size: .8rem; color: var(--dim); margin-top: .2rem; }
+    .metrics-defs table { font-size: .85rem; }
+    .metrics-defs td:first-child { width: 120px; white-space: nowrap; vertical-align: top; padding-right: 1rem; }
+    .metrics-defs td:last-child { color: var(--dim); }
     """
 
 
@@ -79,6 +82,23 @@ def generate_html_report(
     parts.append(f"<style>{_css()}</style></head><body>")
     parts.append("<h1>eval-localmodel Report</h1>")
     parts.append(f'<p class="timestamp">Generated {now} &mdash; {total_tests} test cases</p>')
+
+    # ── Metrics Definitions ───────────────────────────────────────
+    parts.append("<h2>Metrics Definitions</h2>")
+    parts.append('<div class="metrics-defs">')
+    parts.append("<table><tbody>")
+    metrics_defs = [
+        ("Full Match", "Percentage of tests where the model produced the exact expected tool call(s) with correct function name(s) AND all arguments matching (per the match level: exact, fuzzy, or type-only)."),
+        ("Tool Select", "Percentage of tests where the model selected the correct tool function name(s), regardless of argument accuracy. Measures the model's ability to choose the right tool."),
+        ("Arg Accuracy", "Average accuracy of arguments across all tool calls. Each argument is scored: 1.0 for exact/fuzzy match, 0.0 for mismatch. The category score is the mean across all tests."),
+        ("Latency (ms)", "Average wall-clock time from sending the API request to receiving the complete response, measured in milliseconds."),
+        ("Tokens/sec", "Output generation speed: completion_tokens ÷ response_time. When the API doesn't provide token counts, tokens are estimated at ~4 characters per token (marked as estimated)."),
+        ("Errors", "Number of tests that failed due to runtime errors (API failures, timeouts, malformed responses) rather than incorrect tool calls."),
+    ]
+    for name, desc in metrics_defs:
+        parts.append(f"<tr><td><strong>{name}</strong></td><td>{desc}</td></tr>")
+    parts.append("</tbody></table>")
+    parts.append("</div>")
 
     # ── Comparison table ──────────────────────────────────────────
     if summaries:
